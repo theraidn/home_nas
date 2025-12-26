@@ -1,0 +1,56 @@
+#!/bin/bash
+
+# -----------------------------------------------------------------------------
+# Configuration Variables for NAS Deployment
+# -----------------------------------------------------------------------------
+# This file holds all the necessary variables for the NAS deployment script.
+# You can pre-fill these variables to streamline the deployment process.
+# If any of these are left empty, the script will prompt you for them.
+
+
+# --- SSH Connection ---
+# The SSH target for the NAS.
+# Example: "root@192.168.1.100" or "debian@nas.local"
+SSH_TARGET=""
+
+
+# --- NAS User Configuration ---
+# The username for the new user on the NAS.
+NAS_USER=""
+
+
+# --- Password Configuration ---
+# It is NOT RECOMMENDED to store passwords in this file for security reasons.
+# If you leave these empty, the script will prompt you to enter them securely
+# during execution.
+
+# The password for the new NAS user.
+NAS_USER_PASSWORD=""
+
+# The password for the gocryptfs encrypted volume.
+GOCRYPTFS_PASSWORD=""
+
+
+# --- gocryptfs Path Configuration ---
+# Define the paths for the encrypted and decrypted directories.
+# If left empty, they will be created in the user's home directory.
+
+# The full path for the gocryptfs encrypted data directory.
+# If empty, defaults to "/home/${NAS_USER}/nas_encrypted"
+ENCRYPTED_DATA_DIR=""
+
+# The full path for the gocryptfs decrypted mount point.
+# If empty, defaults to "/home/${NAS_USER}/NAS"
+DECRYPTED_MOUNT_POINT=""
+
+
+# --- Additional Configuration ---
+# Set to "true" to perform a full system upgrade (apt-get upgrade).
+# This is a source of non-determinism as it will install the latest of all packages.
+PERFORM_SYSTEM_UPGRADE="false"
+
+# Specify package versions to install. If left empty, the latest version will be installed.
+# Example: "1.23.7"
+SYNCTHING_VERSION=""
+GOCRYPTFS_VERSION=""
+
