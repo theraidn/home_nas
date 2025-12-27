@@ -1,0 +1,28 @@
+#!/bin/bash
+set -e
+NAS_USER="##NAS_USER##"
+ENCRYPTED_DIR="##ENCRYPTED_DIR##"
+DECRYPTED_DIR="##DECRYPTED_DIR##"
+
+echo "### NAS Start Script ###"
+if mount | grep -q " ${DECRYPTED_DIR} type fuse.gocryptfs"; then
+    echo "NAS is already decrypted and mounted at ${DECRYPTED_DIR}."
+else
+    read -s -p "Enter password to decrypt NAS data: " GOCRYPTFS_PASSWORD
+    echo
+    echo "Mounting encrypted directory..."
+    echo "$GOCRYPTFS_PASSWORD" | su -s /bin/bash -c "gocryptfs '$ENCRYPTED_DIR' '$DECRYPTED_DIR'" "$NAS_USER"
+    echo "Mount successful."
+fi
+
+echo "Starting Syncthing service for user $NAS_USER..."
+if ! su -c "systemctl is-active --quiet syncthing@'$NAS_USER'.service"; then
+    su -c "systemctl start syncthing@'$NAS_USER'.service"
+    echo "Syncthing service started."
+else
+    echo "Syncthing service is already running."
+fi
+
+echo
+echo "NAS is ready. Access your files at: ${DECRYPTED_DIR}"
+echo "Syncthing Web UI is available at: http://127.0.0.1:8384 (use SSH port forwarding to access)"
