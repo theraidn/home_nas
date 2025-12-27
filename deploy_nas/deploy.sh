@@ -2,10 +2,29 @@
 set -e
 
 # --- Source function scripts and configuration ---
-# The following scripts are sourced to make their functions available.
-# They are expected to be in a 'scripts' subdirectory relative to this script.
 source "$(dirname "$0")/config.sh"
 source "$(dirname "$0")/scripts/get_user_input.sh"
+
+# --- Global variables and cleanup ---
+
+# Define a global control socket path for SSH connection sharing
+control_socket="/tmp/ssh-mux-%r@%h:%p"
+
+# Define a global cleanup function
+cleanup() {
+    # Only try to close the connection if SSH_TARGET is defined
+    # This prevents errors if the script fails before SSH_TARGET is set
+    if [ -n "$SSH_TARGET" ]; then
+        echo "Closing SSH master connection..."
+        ssh -o "ControlPath=${control_socket}" -S "${control_socket}" -O exit "$SSH_TARGET" || true
+    fi
+    # Clean up the temporary script file
+    rm -f /tmp/start.sh
+}
+
+# Set a global trap to call the cleanup function on script exit
+trap cleanup EXIT
+
 
 # --- Functions ---
 
@@ -39,27 +58,25 @@ deploy_to_nas() {
     source "$(dirname "$0")/scripts/remote_script.sh"
 
     echo
-    echo "Starting remote setup on $SSH_TARGET. You may be prompted for the SSH password."
+    echo "Starting remote setup on $SSH_TARGET. You may be prompted for the SSH password once."
     echo "This will take several minutes."
     echo
 
-    # Ensure local temporary script is cleaned up
-    trap 'rm -f /tmp/start.sh' EXIT
-
+    # Establish a master SSH connection in the background using the global socket
+    echo "Establishing master SSH connection..."
+    ssh -o "ControlPath=${control_socket}" -M -S "${control_socket}" -fnN "$SSH_TARGET"
+    
     # Generate start.sh locally
     generate_start_script
 
     echo "Copying start.sh to remote /start.sh..."
-    scp /tmp/start.sh "$SSH_TARGET:/start.sh"
-    ssh -t "$SSH_TARGET" "chmod +x /start.sh"
+    scp -o "ControlPath=${control_socket}" /tmp/start.sh "$SSH_TARGET:/start.sh"
+    ssh -o "ControlPath=${control_socket}" -t "$SSH_TARGET" "chmod +x /start.sh"
     echo "start.sh copied and made executable."
 
     # The generate_remote_script function prints the script to stdout. We pipe this
     # to ssh, which executes it on the remote host using "bash -s".
-    # This avoids creating a temporary script file and is more secure than
-
-    # passing passwords as command-line arguments.
-    generate_remote_script | ssh -t "$SSH_TARGET" "bash -s"
+    generate_remote_script | ssh -o "ControlPath=${control_socket}" -t "$SSH_TARGET" "bash -s"
 }
 
 # --- Main Script ---
