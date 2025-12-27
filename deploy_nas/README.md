@@ -4,6 +4,10 @@
 
 This set of scripts automates the initial setup and configuration of a Network Attached Storage (NAS) device. It is designed to prepare a fresh Debian-based system with essential services for secure file storage and synchronization.
 
+### ⚠️ Important Security Notice ###
+
+**This script is designed for personal use in a trusted local network (LAN) environment, such as a home setup protected by a firewall. It is not hardened for enterprise or production use and lacks the resilience and advanced security features required for such environments. Use with caution.**
+
 The main features include:
 - Creating a dedicated user for the NAS.
 - Setting up an encrypted file system using `gocryptfs`.
