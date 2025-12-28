@@ -4,9 +4,9 @@
 
 This set of scripts automates the initial setup and configuration of a Network Attached Storage (NAS) device. It is designed to prepare a fresh Debian-based system with essential services for secure file storage and synchronization.
 
-### ⚠️ Important Security Notice ###
-
-**This script is designed for personal use in a trusted local network (LAN) environment, such as a home setup protected by a firewall. It is not hardened for enterprise or production use and lacks the resilience and advanced security features required for such environments. Use with caution.**
+> **⚠️ Important Security Notice**
+>
+> This script is designed for personal use in a trusted local network (LAN) environment, such as a home setup protected by a firewall. It is not hardened for enterprise or production use and lacks the resilience and advanced security features required for such environments. Use with caution.
 
 The main features include:
 - Creating a dedicated user for the NAS.
@@ -60,17 +60,42 @@ After the script has finished successfully, a new script named `/start.sh` will 
 
 This script will prompt for the gocryptfs password to decrypt and mount the storage volume, and then it will start the Syncthing service.
 
-## Limitations and Idempotency
+## Limitations
 
+### Root SSH Access
+The deployment script requires root access to the target machine to perform system-level configurations, such as installing packages and modifying `sshd_config`. For the script to work, you must enable root login via SSH. It is recommended to do this temporarily and disable it after the setup is complete.
+
+1.  **Log in** to your future NAS as a user with `sudo` privileges.
+2.  **Edit the SSH daemon configuration:**
+    ```bash
+    sudo nano /etc/ssh/sshd_config
+    ```
+3.  **Modify the `PermitRootLogin` setting:**
+    Find the line `#PermitRootLogin prohibit-password` (or similar) and change it to:
+    ```
+    PermitRootLogin yes
+    ```
+4.  **Restart the SSH service:**
+    ```bash
+    sudo systemctl restart ssh
+    ```
+
+Once the deployment is finished, it is highly recommended to revert this change for security reasons:
+```
+PermitRootLogin prohibit-password
+```
+and restart the SSH service again.
+
+### Script Behavior
 This script is designed for initial setup but has been made idempotent for several key operations to allow for safer re-runs.
 
-- **Idempotent Operations:**
-    - **User Creation:** Checks if the user exists before creating one.
-    - **SFTP Configuration:** Checks if the configuration block exists in `sshd_config` before adding it.
-    - **gocryptfs Initialization:** Checks if the directory is already initialized before running `gocryptfs -init`.
+**Idempotent Operations**
+- **User Creation:** Checks if the user exists before creating one.
+- **SFTP Configuration:** Checks if the configuration block exists in `sshd_config` before adding it.
+- **gocryptfs Initialization:** Checks if the directory is already initialized before running `gocryptfs -init`.
 
-- **Non-Deterministic Operations:**
-    - **Package Installation:** `apt-get update` fetches the latest package lists. While you can pin versions for `syncthing` and `gocryptfs` in the `config.sh` file, other dependencies and the system upgrade (`PERFORM_SYSTEM_UPGRADE=true`) are non-deterministic and will install the latest available versions at the time of execution.
+**Non-Deterministic Operations**
+- **Package Installation:** `apt-get update` fetches the latest package lists. While you can pin versions for `syncthing` and `gocryptfs` in the `config.sh` file, other dependencies and the system upgrade (`PERFORM_SYSTEM_UPGRADE=true`) are non-deterministic and will install the latest available versions at the time of execution.
 
-- **Security:**
-    - Storing plaintext passwords in `config.sh` is a security risk. The recommended approach is to leave the password variables empty and enter them when prompted by the script.
+### Security
+- Storing plaintext passwords in `config.sh` is a security risk. The recommended approach is to leave the password variables empty and enter them when prompted by the script.
