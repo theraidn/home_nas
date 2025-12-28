@@ -43,7 +43,7 @@ apt-get install -y curl gpg
 
 echo "--- (REMOTE) Adding Syncthing repository... ---"
 curl -s -o /usr/share/keyrings/syncthing-archive-keyring.gpg https://syncthing.net/release-key.gpg
-echo "deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable" | tee /etc/apt/sources.list.d/syncthing.list
+echo "deb [signed-by=/usr/share/keyrings/syncthing-archive-keyring.gpg] https://apt.syncthing.net/ syncthing stable-v2" | tee /etc/apt/sources.list.d/syncthing.list
 
 echo "--- (REMOTE) Updating repositories and installing Syncthing + gocryptfs... ---"
 apt-get update
@@ -67,9 +67,8 @@ else
     cp /etc/ssh/sshd_config /etc/ssh/sshd_config.bak
     bash -c 'cat >> /etc/ssh/sshd_config' <<EOT
 
-# SFTP chroot jail for the NAS user
+# SFTP config for the NAS user
 Match User ${NAS_USER}
-    ChrootDirectory %h
     ForceCommand internal-sftp
     AllowTcpForwarding no
     X11Forwarding no
